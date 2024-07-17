@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Function to kill process by port
+kill_port() {
+    local port=$1
+    echo "Killing processes on port $port"
+    pids=$(sudo lsof -t -i:$port)
+    if [ -n "$pids" ]; then
+        echo "Found processes to kill: $pids"
+        sudo kill -9 $pids
+    else
+        echo "No processes found on port $port"
+    fi
+}
+
+# Ports to be closed
+ports=(8188 8888)
+
+# Iterate over ports and kill associated processes
+for port in "${ports[@]}"; do
+    kill_port $port
+done
