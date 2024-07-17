@@ -1,15 +1,25 @@
-# Screenshot Script
+
+#Scripts
+
+- scr - saves a screenshot alongside a txt file saving the url and timestamp in bibtex format
+- kill8188 - kill port 8188
+
+
+
+
+
+## Screenshot Script scr
 
 This script captures a screenshot of the active window and saves the URL of the active tab in a browser running with the DevTools protocol enabled. The URL and timestamp are saved in BibTeX format.
 
-## Prerequisites
+### Prerequisites
 
 - **xdotool:** Used to get the active window ID and title.
 - **jq:** Used to parse JSON.
 - **gnome-screenshot:** Used to take screenshots.
 - **curl:** Used to fetch the URL from the DevTools protocol.
 
-## Setup
+### Setup
 
 1. Install the necessary tools:
 
@@ -29,7 +39,7 @@ This script captures a screenshot of the active window and saves the URL of the 
     chromium-browser --remote-debugging-port=9222
     ```
 
-## Usage
+### Usage
 
 1. Run the script:
 
@@ -39,54 +49,4 @@ This script captures a screenshot of the active window and saves the URL of the 
 
     This will save a screenshot of the active window and create a `.txt` file with the URL and timestamp in BibTeX format in the `~/Pictures/Screenshots` directory.
 
-## Script Details
 
-```bash
-#!/bin/bash
-
-# Define screenshot directory
-
-TAB_INFO=$(curl http://localhost:9222/json | jq '.[0]')
-URL=$(echo $TAB_INFO | jq -r '.url')
-
-SCREENSHOT_PATH="$HOME/Pictures/Screenshots"
-
-# Check if screenshot directory exists, if not, create it
-if [ ! -d "$SCREENSHOT_PATH" ]; then
-    mkdir -p "$SCREENSHOT_PATH"
-    if [ $? -ne 0 ]; then
-        echo "Failed to create directory: $SCREENSHOT_PATH"
-        exit 1
-    fi
-fi
-
-# Get the active window ID
-WINDOW_ID=$(xdotool getactivewindow)
-
-# Get the active window title
-WINDOW_TITLE=$(xdotool getwindowname $WINDOW_ID | sed "s/[\/:*?\"<>|]/-/g")
-
-# Format the timestamp
-TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-
-# Filename with replaced problematic characters
-FILE_NAME="$TIMESTAMP - $WINDOW_TITLE.png"
-
-# Take a screenshot of a selected area and save it
-gnome-screenshot -a -f "$SCREENSHOT_PATH/$FILE_NAME"
-
-if [ $? -eq 0 ]; then
-    echo "Screenshot saved as $SCREENSHOT_PATH/$FILE_NAME"
-    BIBTEX_ENTRY="@misc{screen_capture_$TIMESTAMP,
-  author = {User},
-  title = {Screenshot of $WINDOW_TITLE},
-  year = {$(date +%Y)},
-  month = {$(date +%m)},
-  day = {$(date +%d)},
-  url = {$URL},
-  note = {Accessed: $TIMESTAMP}
-}"
-    echo "$BIBTEX_ENTRY" > "$SCREENSHOT_PATH/$FILE_NAME.txt"
-else
-    echo "Failed to save screenshot."
-fi
